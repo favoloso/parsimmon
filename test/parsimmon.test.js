@@ -254,6 +254,26 @@ suite('parser', function() {
 
       assert.deepEqual(parser.parse('acccccb'), {status: true, value: 'acccccb'});
     });
+
+    test('using Parser constructor', function(){
+      var parser = Parsimmon.Parser(function(stream, i, ok, fail) {
+        if (stream.charAt(i) === 'a') {
+          return ok(i+1, 'A');
+        }
+        return fail(i, '"a" char');
+      });
+
+      assert.deepEqual(parser.parse('a'), {status: true, value: 'A'});
+      assert.deepEqual(parser.parse('bba'), {
+        status: false,
+        index: {
+          offset: 0,
+          line: 1,
+          column: 1
+        },
+        expected: ['"a" char']
+      });
+    });
   });
 
   test('Unique and sorted .expected array', function() {

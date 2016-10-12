@@ -179,7 +179,7 @@
     if (typeof stream !== 'string') {
       throw new Error('.parse must be called with a string as its argument');
     }
-    var result = this.skip(eof)._(stream, 0);
+    var result = this.skip(eof)._(stream, 0, makeSuccess, makeFailure);
 
     return result.status ? {
       status: true,
@@ -202,7 +202,7 @@
       var result;
       var accum = new Array(numParsers);
       for (var j = 0; j < numParsers; j += 1) {
-        result = mergeReplies(parsers[j]._(stream, i), result);
+        result = mergeReplies(parsers[j]._(stream, i, makeSuccess, makeFailure), result);
         if (!result.status) return result;
         accum[j] = result.value;
         i = result.index;
@@ -242,7 +242,7 @@
     return Parser(function(stream, i) {
       var result;
       for (var j = 0; j < parsers.length; j += 1) {
-        result = mergeReplies(parsers[j]._(stream, i), result);
+        result = mergeReplies(parsers[j]._(stream, i, makeSuccess, makeFailure), result);
         if (result.status) return result;
       }
       return result;
@@ -300,7 +300,7 @@
       var result = undefined;
 
       for (;;) {
-        result = mergeReplies(self._(stream, i), result);
+        result = mergeReplies(self._(stream, i, makeSuccess, makeFailure), result);
         if (result.status) {
           i = result.index;
           accum.push(result.value);
@@ -343,7 +343,7 @@
       var result = undefined;
       var prevResult = undefined;
       for (var times = 0; times < min; times += 1) {
-        result = self._(stream, i);
+        result = self._(stream, i, makeSuccess, makeFailure);
         prevResult = mergeReplies(result, prevResult);
         if (result.status) {
           i = result.index;
@@ -353,7 +353,7 @@
         }
       }
       for (; times < max; times += 1) {
-        result = self._(stream, i);
+        result = self._(stream, i, makeSuccess, makeFailure);
         prevResult = mergeReplies(result, prevResult);
         if (result.status) {
           i = result.index;
@@ -387,7 +387,7 @@
     assertFunction(fn);
     var self = this;
     return Parser(function(stream, i) {
-      var result = self._(stream, i);
+      var result = self._(stream, i, makeSuccess, makeFailure);
       if (!result.status) {
         return result;
       }
@@ -412,7 +412,7 @@
   _.desc = function(expected) {
     var self = this;
     return Parser(function(stream, i) {
-      var reply = self._(stream, i);
+      var reply = self._(stream, i, makeSuccess, makeFailure);
       if (!reply.status) {
         reply.expected = [expected];
       }
@@ -536,7 +536,7 @@
 
     var parser = Parser(function(stream, i) {
       parser._ = f()._;
-      return parser._(stream, i);
+      return parser._(stream, i, makeSuccess, makeFailure);
     });
 
     if (desc) {
@@ -586,10 +586,10 @@
   _.chain = function(f) {
     var self = this;
     return Parser(function(stream, i) {
-      var result = self._(stream, i);
+      var result = self._(stream, i, makeSuccess, makeFailure);
       if (!result.status) return result;
       var nextParser = f(result.value);
-      return mergeReplies(nextParser._(stream, result.index), result);
+      return mergeReplies(nextParser._(stream, result.index, makeSuccess, makeFailure), result);
     });
   };
 
